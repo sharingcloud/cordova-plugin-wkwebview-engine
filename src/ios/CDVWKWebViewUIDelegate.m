@@ -17,6 +17,11 @@
  under the License.
  */
 
+#if __has_include("CDVWKInAppBrowser.h")
+#import "CDVWKInAppBrowser.h"
+#define INAPPBROWSER_PRESENT
+#endif
+
 #import "CDVWKWebViewUIDelegate.h"
 
 @implementation CDVWKWebViewUIDelegate
@@ -118,6 +123,26 @@
     UIViewController* rootController = [UIApplication sharedApplication].delegate.window.rootViewController;
 
     [rootController presentViewController:alert animated:YES completion:nil];
+}
+
+- (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
+    forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
+{
+    if (!navigationAction.targetFrame.isMainFrame) {
+#ifdef INAPPBROWSER_PRESENT
+        CDVWKInAppBrowser* inAppBrowser = [CDVWKInAppBrowser getInstance];
+        NSArray* args = @[@"", @"inAppBrowser", @"open", @[navigationAction.request.URL.absoluteString, @"_blank", @"location=no"]];
+        CDVInvokedUrlCommand* command = [CDVInvokedUrlCommand commandFromJson:args];
+        NSLog(@"Opening browser");
+        [inAppBrowser open:command];
+#else
+        [[UIApplication sharedApplication] openUrl:navigationAction.request.URL];
+#endif
+    } else {
+        [webView loadRequest:navigationAction.request];
+    }
+
+    return nil;
 }
 
 @end

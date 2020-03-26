@@ -242,10 +242,8 @@ static void * KVOContext = &KVOContext;
 
     wkWebView.configuration.preferences.minimumFontSize = [settings cordovaFloatSettingForKey:@"MinimumFontSize" defaultValue:0.0];
 
-    /*
-     wkWebView.configuration.preferences.javaScriptEnabled = [settings cordovaBoolSettingForKey:@"JavaScriptEnabled" default:YES];
-     wkWebView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = [settings cordovaBoolSettingForKey:@"JavaScriptCanOpenWindowsAutomatically" default:NO];
-     */
+    wkWebView.configuration.preferences.javaScriptEnabled = YES;
+    wkWebView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = YES;
 
     // By default, DisallowOverscroll is false (thus bounce is allowed)
     BOOL bounceAllowed = !([settings cordovaBoolSettingForKey:@"DisallowOverscroll" defaultValue:NO]);
@@ -396,6 +394,17 @@ static void * KVOContext = &KVOContext;
         NSLog(@"%@", [errorUrl absoluteString]);
         [theWebView loadRequest:[NSURLRequest requestWithURL:errorUrl]];
     }
+}
+
+- (void)     webView:(WKWebView *)webView didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
+    completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler
+{
+    // Allow SSL
+    SecTrustRef serverTrust = challenge.protectionSpace.serverTrust;
+    CFDataRef exceptions = SecTrustCopyExceptions (serverTrust);
+    SecTrustSetExceptions (serverTrust, exceptions);
+    CFRelease (exceptions);
+    completionHandler (NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:serverTrust]);
 }
 
 - (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView
