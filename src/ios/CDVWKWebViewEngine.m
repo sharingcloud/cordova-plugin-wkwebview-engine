@@ -401,10 +401,14 @@ static void * KVOContext = &KVOContext;
 {
     // Allow SSL
     SecTrustRef serverTrust = challenge.protectionSpace.serverTrust;
-    CFDataRef exceptions = SecTrustCopyExceptions (serverTrust);
-    SecTrustSetExceptions (serverTrust, exceptions);
-    CFRelease (exceptions);
-    completionHandler (NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:serverTrust]);
+    if (serverTrust) {
+        CFDataRef exceptions = SecTrustCopyExceptions (serverTrust);
+        SecTrustSetExceptions (serverTrust, exceptions);
+        CFRelease (exceptions);
+        completionHandler (NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:serverTrust]);
+    } else {
+        completionHandler (NSURLSessionAuthChallengeUseCredential, nil);
+    }
 }
 
 - (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView
